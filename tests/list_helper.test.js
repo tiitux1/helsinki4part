@@ -28,3 +28,50 @@ describe('total likes', () => {
     assert.strictEqual(result, 5)
   })
 })
+
+describe('favorite blog', () => {
+  const listWithBlogs = [
+    {
+      _id: '1',
+      title: 'Blog One',
+      author: 'Author One',
+      url: 'http://example.com/1',
+      likes: 2,
+      __v: 0
+    },
+    {
+      _id: '2',
+      title: 'Blog Two',
+      author: 'Author Two',
+      url: 'http://example.com/2',
+      likes: 5,
+      __v: 0
+    },
+    {
+      _id: '3',
+      title: 'Blog Three',
+      author: 'Author Three',
+      url: 'http://example.com/3',
+      likes: 3,
+      __v: 0
+    }
+  ]
+
+  test('returns the blog with most likes', () => {
+    const result = listHelper.favoriteBlog(listWithBlogs)
+    const expected = {
+      _id: '2',
+      title: 'Blog Two',
+      author: 'Author Two',
+      url: 'http://example.com/2',
+      likes: 5,
+      __v: 0
+    }
+    assert.deepStrictEqual(result, expected)
+  })
+
+  test('returns null for empty list', () => {
+    const result = listHelper.favoriteBlog([])
+    assert.strictEqual(result, null)
+  })
+})
