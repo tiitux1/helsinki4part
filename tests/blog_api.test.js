@@ -55,6 +55,43 @@ afterAll(async () => {
   await mongoose.connection.close()
 })
 
+describe('performance and concurrency', () => {
+  test('multiple blogs can be added concurrently', async () => {
+    const newBlogs = [
+      {
+        title: 'Concurrent Blog 1',
+        author: 'Author 1',
+        url: 'http://example.com/concurrent1',
+        likes: 1,
+      },
+      {
+        title: 'Concurrent Blog 2',
+        author: 'Author 2',
+        url: 'http://example.com/concurrent2',
+        likes: 2,
+      },
+      {
+        title: 'Concurrent Blog 3',
+        author: 'Author 3',
+        url: 'http://example.com/concurrent3',
+        likes: 3,
+      },
+    ]
+
+    await Promise.all(
+      newBlogs.map(blog =>
+        api.post('/api/blogs').send(blog).expect(201).expect('Content-Type', /application\/json/)
+      )
+    )
+
+    const response = await api.get('/api/blogs')
+    const titles = response.body.map(b => b.title)
+    newBlogs.forEach(blog => {
+      expect(titles).toContain(blog.title)
+    })
+  })
+})
+
 describe('edge cases and validation', () => {
   test('adding a blog without title returns 400', async () => {
     const newBlog = {
