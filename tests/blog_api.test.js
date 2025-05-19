@@ -40,8 +40,91 @@ describe('when there are initially some blogs saved', () => {
     const response = await api.get('/api/blogs')
     expect(response.body).toHaveLength(initialBlogs.length)
   })
+
+  test('the unique identifier property of the blog posts is named id', async () => {
+    const response = await api.get('/api/blogs')
+    const blogs = response.body
+    blogs.forEach(blog => {
+      expect(blog.id).toBeDefined()
+      expect(blog._id).not.toBeDefined()
+    })
+  })
 })
 
 afterAll(async () => {
   await mongoose.connection.close()
+})
+
+describe('addition of a new blog', () => {
+  test('a valid blog can be added', async () => {
+    const newBlog = {
+      title: 'New blog',
+      author: 'Author New',
+      url: 'http://example.com/new',
+      likes: 5,
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+
+    const response = await api.get('/api/blogs')
+    const titles = response.body.map(r => r.title)
+    expect(titles).toContain('New blog')
+  })
+
+  test('blog without likes defaults to 0', async () => {
+    const newBlog = {
+      title: 'No likes blog',
+      author: 'Author NoLikes',
+      url: 'http://example.com/nolikes',
+    }
+
+    const response = await api.post('/api/blogs').send(newBlog).expect(201)
+    expect(response.body.likes).toBe(0)
+  })
+
+  test('blog without title and url is not added', async () => {
+    const newBlog = {
+      author: 'Author Missing',
+      likes: 1,
+    }
+
+    await api.post('/api/blogs').send(newBlog).expect(400)
+  })
+})
+
+describe('deletion of a blog', () => {
+  test('a blog can be deleted', async () => {
+    const response = await api.get('/api/blogs')
+    const blogToDelete = response.body[0]
+
+    await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204)
+
+    const blogsAfterDeletion = await api.get('/api/blogs')
+    expect(blogsAfterDeletion.body).toHaveLength(initialBlogs.length - 1)
+
+    const titles = blogsAfterDeletion.body.map(r => r.title)
+    expect(titles).not.toContain(blogToDelete.title)
+  })
+})
+
+describe('updating a blog', () => {
+  test('a blog can be updated', async () => {
+    const response = await api.get('/api/blogs')
+    const blogToUpdate = response.body[0]
+
+    const updatedBlog = {
+      ...blogToUpdate,
+      likes: blogToUpdate.likes + 1,
+    }
+
+    await api.put(`/api/blogs/${blogToUpdate.id}`).send(updatedBlog).expect(200)
+
+    const blogsAfterUpdate = await api.get('/api/blogs')
+    const updated = blogsAfterUpdate.body.find(b => b.id === blogToUpdate.id)
+    expect(updated.likes).toBe(blogToUpdate.likes + 1)
+  })
 })
