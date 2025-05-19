@@ -55,6 +55,42 @@ afterAll(async () => {
   await mongoose.connection.close()
 })
 
+describe('update edge cases', () => {
+  test('updating a non-existing blog returns 404', async () => {
+    const validNonexistingId = await (async () => {
+      const blog = new Blog({
+        title: 'willremovethissoon',
+        author: 'temp',
+        url: 'http://temp.com',
+        likes: 0,
+      })
+      await blog.save()
+      await blog.remove()
+      return blog._id.toString()
+    })()
+
+    const updatedBlog = {
+      title: 'Updated Title',
+      author: 'Updated Author',
+      url: 'http://updated.com',
+      likes: 10,
+    }
+
+    await api.put(`/api/blogs/${validNonexistingId}`).send(updatedBlog).expect(404)
+  })
+
+  test('updating with invalid id returns 400', async () => {
+    const invalidId = '12345invalidid'
+    const updatedBlog = {
+      title: 'Updated Title',
+      author: 'Updated Author',
+      url: 'http://updated.com',
+      likes: 10,
+    }
+    await api.put(`/api/blogs/${invalidId}`).send(updatedBlog).expect(400)
+  })
+})
+
 describe('deletion edge cases', () => {
   test('deleting a non-existing blog returns 204', async () => {
     const validNonexistingId = await (async () => {
