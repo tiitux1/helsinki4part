@@ -55,6 +55,29 @@ afterAll(async () => {
   await mongoose.connection.close()
 })
 
+describe('deletion edge cases', () => {
+  test('deleting a non-existing blog returns 204', async () => {
+    const validNonexistingId = await (async () => {
+      const blog = new Blog({
+        title: 'willremovethissoon',
+        author: 'temp',
+        url: 'http://temp.com',
+        likes: 0,
+      })
+      await blog.save()
+      await blog.remove()
+      return blog._id.toString()
+    })()
+
+    await api.delete(`/api/blogs/${validNonexistingId}`).expect(204)
+  })
+
+  test('deleting with invalid id returns 400', async () => {
+    const invalidId = '12345invalidid'
+    await api.delete(`/api/blogs/${invalidId}`).expect(400)
+  })
+})
+
 describe('performance and concurrency', () => {
   test('multiple blogs can be added concurrently', async () => {
     const newBlogs = [
