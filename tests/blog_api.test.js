@@ -55,6 +55,50 @@ afterAll(async () => {
   await mongoose.connection.close()
 })
 
+describe('edge cases and validation', () => {
+  test('adding a blog without title returns 400', async () => {
+    const newBlog = {
+      author: 'Author NoTitle',
+      url: 'http://example.com/notitle',
+      likes: 1,
+    }
+
+    await api.post('/api/blogs').send(newBlog).expect(400)
+  })
+
+  test('adding a blog without url returns 400', async () => {
+    const newBlog = {
+      title: 'No URL Blog',
+      author: 'Author NoUrl',
+      likes: 1,
+    }
+
+    await api.post('/api/blogs').send(newBlog).expect(400)
+  })
+
+  test('adding a blog with empty title and url returns 400', async () => {
+    const newBlog = {
+      title: '',
+      author: 'Author Empty',
+      url: '',
+      likes: 1,
+    }
+
+    await api.post('/api/blogs').send(newBlog).expect(400)
+  })
+
+  test('adding a blog with invalid likes value returns 400', async () => {
+    const newBlog = {
+      title: 'Invalid Likes',
+      author: 'Author Invalid',
+      url: 'http://example.com/invalidlikes',
+      likes: 'not-a-number',
+    }
+
+    await api.post('/api/blogs').send(newBlog).expect(400)
+  })
+})
+
 describe('addition of a new blog', () => {
   test('a valid blog can be added', async () => {
     const newBlog = {
