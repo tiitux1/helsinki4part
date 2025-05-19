@@ -16,8 +16,10 @@ mongoose.connect(mongoUrl)
   .catch((error) => console.error('Error connecting to MongoDB:', error))
 
 const blogsRouter = require('./controllers/blogs')
+const usersRouter = require('./controllers/users')
 
 // Routes
 app.use('/api/blogs', blogsRouter)
+app.use('/api/users', usersRouter)
 
 module.exports = app
