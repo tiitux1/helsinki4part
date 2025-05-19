@@ -1,7 +1,9 @@
 const mongoose = require('mongoose')
 const supertest = require('supertest')
+const bcrypt = require('bcryptjs')
 const app = require('../bloglist/app')
 const Blog = require('../bloglist/models/blog')
+const User = require('../bloglist/models/user')
 
 const api = supertest(app)
 
@@ -20,10 +22,25 @@ const initialBlogs = [
   },
 ]
 
+let token = null
+
+beforeAll(async () => {
+  await User.deleteMany({})
+  const passwordHash = await bcrypt.hash('sekret', 10)
+  const user = new User({ username: 'root', name: 'Superuser', passwordHash })
+  await user.save()
+
+  const response = await api
+    .post('/api/login')
+    .send({ username: 'root', password: 'sekret' })
+
+  token = response.body.token
+})
+
 beforeEach(async () => {
   await Blog.deleteMany({})
   for (const blog of initialBlogs) {
-    const blogObject = new Blog(blog)
+    const blogObject = new Blog({ ...blog, user: user._id })
     await blogObject.save()
   }
 })
@@ -206,6 +223,7 @@ describe('addition of a new blog', () => {
 
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -222,7 +240,11 @@ describe('addition of a new blog', () => {
       url: 'http://example.com/nolikes',
     }
 
-    const response = await api.post('/api/blogs').send(newBlog).expect(201)
+    const response = await api
+      .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
+      .send(newBlog)
+      .expect(201)
     expect(response.body.likes).toBe(0)
   })
 
@@ -232,7 +254,22 @@ describe('addition of a new blog', () => {
       likes: 1,
     }
 
-    await api.post('/api/blogs').send(newBlog).expect(400)
+    await api
+      .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
+      .send(newBlog)
+      .expect(400)
+  })
+
+  test('blog creation fails without token', async () => {
+    const newBlog = {
+      title: 'No token blog',
+      author: 'Author NoToken',
+      url: 'http://example.com/notoken',
+      likes: 1,
+    }
+
+    await api.post('/api/blogs').send(newBlog).expect(401)
   })
 })
 
