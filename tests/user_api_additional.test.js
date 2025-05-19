@@ -22,7 +22,7 @@ describe('user creation edge cases', () => {
       .expect(400)
       .expect('Content-Type', /application\/json/)
 
-    expect(result.body.error).toContain('`username` is required')
+    expect(result.body.error).toContain('username must be at least 3 characters long')
   })
 
   test('creation fails with missing password', async () => {
@@ -53,7 +53,7 @@ describe('user creation edge cases', () => {
       .expect(400)
       .expect('Content-Type', /application\/json/)
 
-    expect(result.body.error).toContain('`username` is required')
+    expect(result.body.error).toContain('username must be at least 3 characters long')
   })
 })
 
