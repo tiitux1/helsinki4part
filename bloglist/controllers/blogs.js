@@ -3,24 +3,34 @@ const Blog = require('../models/blog')
 const blogsRouter = express.Router()
 
 blogsRouter.get('/', async (req, res) => {
-  const blogs = await Blog.find({})
+  const blogs = await Blog.find({}).populate('user', { username: 1, name: 1 })
   res.json(blogs)
 })
 
-blogsRouter.post('/', async (req, res) => {
+blogsRouter.post('/', async (req, res, next) => {
   try {
     const blogData = req.body
     if (blogData.likes === undefined) {
       blogData.likes = 0
     }
+
+    // Find a user to assign as the blog's creator
+    const User = require('../models/user')
+    const users = await User.find({})
+    if (users.length === 0) {
+      return res.status(400).json({ error: 'no users found to assign as blog creator' })
+    }
+    blogData.user = users[0]._id
+
     const blog = new Blog(blogData)
     const savedBlog = await blog.save()
-    res.status(201).json(savedBlog)
+    const populatedBlog = await savedBlog.populate('user', { username: 1, name: 1 })
+    res.status(201).json(populatedBlog)
   } catch (error) {
     if (error.name === 'ValidationError') {
       return res.status(400).json({ error: error.message })
     }
-    throw error
+    next(error)
   }
 })
 
