@@ -12,13 +12,7 @@ const User = require('../models/user')
 
 blogsRouter.post('/', async (req, res, next) => {
   try {
-    const token = req.token
-    const decodedToken = jwt.verify(token, process.env.SECRET)
-    if (!token || !decodedToken.id) {
-      return res.status(401).json({ error: 'token missing or invalid' })
-    }
-
-    const user = await User.findById(decodedToken.id)
+    const user = req.user
     if (!user) {
       return res.status(401).json({ error: 'user not found' })
     }
@@ -47,13 +41,7 @@ blogsRouter.post('/', async (req, res, next) => {
 
 blogsRouter.delete('/:id', async (req, res, next) => {
   try {
-    const token = req.token
-    const decodedToken = jwt.verify(token, process.env.SECRET)
-    if (!token || !decodedToken.id) {
-      return res.status(401).json({ error: 'token missing or invalid' })
-    }
-
-    const user = await User.findById(decodedToken.id)
+    const user = req.user
     if (!user) {
       return res.status(401).json({ error: 'user not found' })
     }

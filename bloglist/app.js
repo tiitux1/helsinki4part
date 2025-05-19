@@ -23,7 +23,7 @@ const loginRouter = require('./controllers/login')
 app.use(middleware.tokenExtractor)
 
 // Routes
-app.use('/api/blogs', blogsRouter)
+app.use('/api/blogs', middleware.userExtractor, blogsRouter)
 app.use('/api/users', usersRouter)
 app.use('/api/login', loginRouter)
 
